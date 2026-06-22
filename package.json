@@ -1,0 +1,14 @@
+{
+  "name": "com.deucarian.run-upgrades",
+  "version": "0.1.0",
+  "displayName": "Deucarian Run Upgrades",
+  "description": "Pure C# roguelite run upgrade definitions, deterministic drafts, choices, locks, rerolls, banish, prerequisites, exclusions, and snapshots.",
+  "unity": "6000.3",
+  "author": {
+    "name": "Deucarian"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "com.deucarian.gameplay-foundation": "0.1.0"
+  }
+}
