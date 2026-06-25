@@ -1,5 +1,6 @@
 using System;
 using Deucarian.GameContentAuthoring.Editor;
+using Deucarian.RunUpgrades.Editor;
 using Deucarian.RunUpgrades.Authoring;
 using NUnit.Framework;
 using UnityEditor;
@@ -82,6 +83,39 @@ namespace Deucarian.RunUpgrades.Tests
         }
 
         [Test]
+        public void RunUpgradeValidationRejectsNegativeMultiplicativeModifier()
+        {
+            RunUpgradeDefinitionAsset asset = RunUpgradeDefinitionAsset.CreateTransient(
+                "upgrade.authoring.bad-multiplier",
+                "Bad Multiplier",
+                RunUpgradeRarity.Common,
+                1,
+                1,
+                new[]
+                {
+                    new RunUpgradeEffectRecipe(
+                        RunUpgradeAuthoringTargetKind.ProjectileSpeed,
+                        RunUpgradeModifierType.Multiplicative,
+                        -0.5,
+                        targetIdOverride: "projectile.authoring")
+                });
+
+            try
+            {
+                RunUpgradeDefinitionValidationReport report = RunUpgradeDefinitionValidator.Validate(asset);
+
+                Assert.IsFalse(report.IsValid);
+                Assert.That(FindIssue(report, "Effects[0].Modifier"), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(asset.Effects);
+                Object.DestroyImmediate(asset.Economy);
+                Object.DestroyImmediate(asset);
+            }
+        }
+
+        [Test]
         public void RunUpgradeValidationRejectsInvalidRankAndCostData()
         {
             RunUpgradeDefinitionAsset asset = RunUpgradeDefinitionAsset.CreateTransient(
@@ -114,6 +148,26 @@ namespace Deucarian.RunUpgrades.Tests
                 Object.DestroyImmediate(asset.Economy);
                 Object.DestroyImmediate(asset);
             }
+        }
+
+        [Test]
+        public void RunUpgradePreviewSummaryHandlesMissingTargets()
+        {
+            var state = new RunUpgradeAuthoringState();
+            state.EnsureEffects();
+            state.Effects[0].Attack = null;
+            state.Effects[0].Weapon = null;
+            state.Effects[0].Enemy = null;
+            state.Effects[0].TargetIdOverride = string.Empty;
+
+            Assert.DoesNotThrow(() =>
+            {
+                Assert.That(RunUpgradeGameContentPreviewSummaries.BuildAffectedRows(state).Count, Is.GreaterThan(0));
+                Assert.That(RunUpgradeGameContentPreviewSummaries.BuildRankTimeline(state).Count, Is.GreaterThan(0));
+                Assert.That(RunUpgradeGameContentPreviewSummaries.BuildCompatibilityRows(state).Count, Is.GreaterThan(0));
+                Assert.That(RunUpgradeGameContentPreviewSummaries.BuildWarnings(state).Count, Is.GreaterThan(0));
+                StringAssert.Contains("effect(s)", RunUpgradeGameContentPreviewSummaries.PreviewRankImpact(state));
+            });
         }
 
         [Test]

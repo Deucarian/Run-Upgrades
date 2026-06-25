@@ -127,8 +127,8 @@ namespace Deucarian.RunUpgrades.Authoring
 
                 if (double.IsNaN(effect.Amount) || double.IsInfinity(effect.Amount))
                     issues.Add(RunUpgradeDefinitionValidationIssue.Error(path + ".Amount", "Amount must be finite."));
-                if (effect.ModifierType == RunUpgradeModifierType.Multiplicative && effect.Amount == 0d)
-                    issues.Add(RunUpgradeDefinitionValidationIssue.Error(path + ".Modifier", "Multiplicative modifiers cannot be zero."));
+                if (effect.ModifierType == RunUpgradeModifierType.Multiplicative && effect.Amount <= 0d)
+                    issues.Add(RunUpgradeDefinitionValidationIssue.Error(path + ".Modifier", "Multiplicative modifiers must be greater than zero."));
                 if (effect.ModifierType == RunUpgradeModifierType.SetValue && effect.Amount < 0d)
                     issues.Add(RunUpgradeDefinitionValidationIssue.Error(path + ".Modifier", "Set value modifiers cannot be negative."));
                 if (string.IsNullOrWhiteSpace(effect.GetEffectId()))
