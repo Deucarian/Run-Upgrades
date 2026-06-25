@@ -1,11 +1,9 @@
 {
-  "name": "Deucarian.RunUpgrades.Tests",
-  "rootNamespace": "Deucarian.RunUpgrades.Tests",
+  "name": "Deucarian.RunUpgrades.Editor",
+  "rootNamespace": "Deucarian.RunUpgrades.Editor",
   "references": [
     "Deucarian.RunUpgrades",
     "Deucarian.RunUpgrades.Authoring",
-    "Deucarian.RunUpgrades.Editor",
-    "Deucarian.GameplayFoundation",
     "Deucarian.Attacks.Authoring",
     "Deucarian.WeaponSystems.Authoring",
     "Deucarian.GameContentAuthoring.Editor"
@@ -17,13 +15,8 @@
   "allowUnsafeCode": false,
   "overrideReferences": false,
   "precompiledReferences": [],
-  "autoReferenced": false,
-  "defineConstraints": [
-    "UNITY_INCLUDE_TESTS"
-  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
   "versionDefines": [],
-  "optionalUnityReferences": [
-    "TestAssemblies"
-  ],
   "noEngineReferences": false
 }
