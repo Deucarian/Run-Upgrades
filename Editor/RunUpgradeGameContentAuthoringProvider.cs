@@ -49,20 +49,20 @@ namespace Deucarian.RunUpgrades.Editor
 
             context.DrawSection("Upgrade Identity", () =>
             {
-                _state.UpgradeId = EditorGUILayout.TextField("Stable ID", _state.UpgradeId);
-                _state.DisplayName = EditorGUILayout.TextField("Display Name", _state.DisplayName);
-                _state.Icon = (Sprite)EditorGUILayout.ObjectField("Icon", _state.Icon, typeof(Sprite), false);
-                _state.Description = EditorGUILayout.TextField("Description", _state.Description);
-                _state.TagsCsv = EditorGUILayout.TextField("Tags", _state.TagsCsv);
+                _state.UpgradeId = context.DrawTextField("Stable ID", _state.UpgradeId);
+                _state.DisplayName = context.DrawTextField("Display Name", _state.DisplayName);
+                _state.Icon = context.DrawObjectField("Icon", _state.Icon);
+                _state.Description = context.DrawTextArea("Description", _state.Description);
+                _state.TagsCsv = context.DrawTextField("Tags", _state.TagsCsv);
                 _state.OutputRoot = context.DrawOutputRootField(_state.OutputRoot);
             });
 
             context.DrawSection("Economy", () =>
             {
-                _state.Rarity = (RunUpgradeRarity)EditorGUILayout.EnumPopup("Rarity", _state.Rarity);
-                _state.Weight = EditorGUILayout.IntField("Draft Weight", _state.Weight);
-                _state.MaxRank = EditorGUILayout.IntField("Max Rank", _state.MaxRank);
-                _state.CostsCsv = EditorGUILayout.TextField("Per-Rank Costs", _state.CostsCsv);
+                _state.Rarity = context.DrawEnumPopup("Rarity", _state.Rarity);
+                _state.Weight = context.DrawIntField("Draft Weight", _state.Weight);
+                _state.MaxRank = context.DrawIntField("Max Rank", _state.MaxRank);
+                _state.CostsCsv = context.DrawTextField("Per-Rank Costs", _state.CostsCsv);
             });
 
             context.DrawSection("Effects", () =>
@@ -76,8 +76,8 @@ namespace Deucarian.RunUpgrades.Editor
 
             context.DrawSection("Prerequisites", () =>
             {
-                _state.PrerequisitesCsv = EditorGUILayout.TextField("Prerequisites", _state.PrerequisitesCsv);
-                _state.ExclusionsCsv = EditorGUILayout.TextField("Exclusions", _state.ExclusionsCsv);
+                _state.PrerequisitesCsv = context.DrawTextField("Prerequisites", _state.PrerequisitesCsv);
+                _state.ExclusionsCsv = context.DrawTextField("Exclusions", _state.ExclusionsCsv);
             });
 
             context.DrawSection("Preview", () =>
@@ -108,14 +108,14 @@ namespace Deucarian.RunUpgrades.Editor
 
                 if (remove) return;
 
-                effect.TargetKind = (RunUpgradeAuthoringTargetKind)EditorGUILayout.EnumPopup("Target", effect.TargetKind);
-                effect.ModifierType = (RunUpgradeModifierType)EditorGUILayout.EnumPopup("Modifier", effect.ModifierType);
-                effect.Amount = EditorGUILayout.DoubleField("Amount", effect.Amount);
-                effect.Attack = (AttackDefinitionAsset)EditorGUILayout.ObjectField("Attack", effect.Attack, typeof(AttackDefinitionAsset), false);
-                effect.Weapon = (WeaponDefinitionAsset)EditorGUILayout.ObjectField("Weapon", effect.Weapon, typeof(WeaponDefinitionAsset), false);
-                effect.Enemy = (EnemyDefinitionAsset)EditorGUILayout.ObjectField("Enemy", effect.Enemy, typeof(EnemyDefinitionAsset), false);
-                effect.TargetIdOverride = EditorGUILayout.TextField("Target ID Override", effect.TargetIdOverride);
-                effect.EffectIdOverride = EditorGUILayout.TextField("Effect ID Override", effect.EffectIdOverride);
+                effect.TargetKind = context.DrawEnumPopup("Target", effect.TargetKind);
+                effect.ModifierType = context.DrawEnumPopup("Modifier", effect.ModifierType);
+                effect.Amount = context.DrawDoubleField("Amount", effect.Amount);
+                effect.Attack = context.DrawObjectField("Attack", effect.Attack);
+                effect.Weapon = context.DrawObjectField("Weapon", effect.Weapon);
+                effect.Enemy = context.DrawObjectField("Enemy", effect.Enemy);
+                effect.TargetIdOverride = context.DrawTextField("Target ID Override", effect.TargetIdOverride);
+                effect.EffectIdOverride = context.DrawTextField("Effect ID Override", effect.EffectIdOverride);
             });
 
             if (remove)
