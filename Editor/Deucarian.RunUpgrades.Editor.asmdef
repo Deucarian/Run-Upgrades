@@ -6,6 +6,7 @@
     "Deucarian.RunUpgrades.Authoring",
     "Deucarian.Attacks.Authoring",
     "Deucarian.WeaponSystems.Authoring",
+    "Deucarian.GameplayFoundation",
     "Deucarian.GameContentAuthoring.Editor"
   ],
   "includePlatforms": [
