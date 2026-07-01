@@ -8,7 +8,8 @@
     "Deucarian.GameplayFoundation",
     "Deucarian.Attacks.Authoring",
     "Deucarian.WeaponSystems.Authoring",
-    "Deucarian.GameContentAuthoring.Editor"
+    "Deucarian.GameContentAuthoring.Editor",
+    "Deucarian.Editor"
   ],
   "includePlatforms": [
     "Editor"
