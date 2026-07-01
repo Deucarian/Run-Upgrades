@@ -19,19 +19,30 @@ namespace Deucarian.RunUpgrades.Editor
         }
     }
 
-    internal sealed class RunUpgradeAuthoringProvider : IGameContentAuthoringProvider
+    internal sealed class RunUpgradeAuthoringProvider : IGameContentAuthoringProvider, IGameContentAuthoringSurfaceProvider
     {
         private readonly RunUpgradeAuthoringState _state = new RunUpgradeAuthoringState();
         private readonly RunUpgradeGameContentPreviewController _preview = new RunUpgradeGameContentPreviewController();
+        private readonly RunUpgradeProviderV2State _v2State = new RunUpgradeProviderV2State();
+        private readonly RunUpgradeProviderV2View _v2View = new RunUpgradeProviderV2View();
 
         public string ProviderId => "com.deucarian.run-upgrades.upgrade";
         public string DisplayName => "Upgrade";
         public string Description => "Create a root RunUpgradeDefinition with economy and effect sections.";
         public int SortOrder => 140;
         public bool Enabled => true;
-        public void OnSelected() { }
+        public void OnSelected() { _v2State.ResetProviderSession(); }
         public void DrawPreview(GameContentAuthoringPreviewContext context) { _preview.Draw(context, _state); }
-        public void StopPreview() { _preview.Stop(); }
+        public void StopPreview()
+        {
+            _preview.Stop();
+            _v2State.StopPreview();
+        }
+
+        public void DrawCustomAuthoringSurface(GameContentAuthoringSurfaceContext context)
+        {
+            _v2View.Draw(context, _state, _preview, _v2State);
+        }
 
         public void Draw(GameContentAuthoringContext context)
         {
@@ -330,6 +341,25 @@ namespace Deucarian.RunUpgrades.Editor
             return new GameContentAuthoringValidationResult(issues);
         }
 
+        public static GameContentAuthoringValidationResult ValidateForUpdate(RunUpgradeAuthoringState state, RunUpgradeDefinitionAsset existingAsset)
+        {
+            RunUpgradeDefinitionAsset recipe = BuildRecipe(state, true);
+            try
+            {
+                var issues = ToSharedIssues(RunUpgradeDefinitionValidator.Validate(recipe));
+                AddCostInputIssues(issues, state.CostsCsv);
+                if (existingAsset == null)
+                    issues.Add(GameContentAuthoringValidationIssue.Error("Upgrade", "Select an upgrade asset before saving."));
+                if (GameContentAuthoringEditorAssets.HasDuplicateIdExcept<RunUpgradeDefinitionAsset>(state.UpgradeId, existingAsset, asset => asset.Id))
+                    issues.Add(GameContentAuthoringValidationIssue.Error("Upgrade.Id", "Upgrade IDs must be unique. Another upgrade already uses this stable ID."));
+                return new GameContentAuthoringValidationResult(issues);
+            }
+            finally
+            {
+                DestroyTransient(recipe);
+            }
+        }
+
         public static IReadOnlyList<string> GetPreviewLines(RunUpgradeAuthoringState state)
         {
             return new[]
@@ -378,6 +408,36 @@ namespace Deucarian.RunUpgrades.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             return new GameContentCreationResult(true, "Created upgrade definition at " + rootPath, AssetDatabase.LoadAssetAtPath<RunUpgradeDefinitionAsset>(rootPath));
+        }
+
+        public static GameContentCreationResult UpdateExistingAsset(RunUpgradeDefinitionAsset root, RunUpgradeAuthoringState state)
+        {
+            GameContentAuthoringValidationResult report = ValidateForUpdate(state, root);
+            if (!report.IsValid)
+                return new GameContentCreationResult(false, "Fix validation errors before saving this upgrade.", root);
+            if (root == null)
+                return new GameContentCreationResult(false, "Select an upgrade asset before saving.", null);
+
+            RunUpgradeEconomyDefinitionAsset economy = EnsureSectionAsset(root, root.Economy, "Economy");
+            RunUpgradeEffectsDefinitionAsset effects = EnsureSectionAsset(root, root.Effects, "Effects");
+
+            Undo.RecordObjects(new UnityEngine.Object[] { root, economy, effects }, "Save Run Upgrade Definition");
+            economy.Configure(state.Rarity, state.Weight, state.MaxRank, ParseCosts(state.CostsCsv));
+
+            var recipes = new List<RunUpgradeEffectRecipe>();
+            state.EnsureEffects();
+            for (int i = 0; i < state.Effects.Count; i++)
+                recipes.Add(ToRecipe(state.Effects[i]));
+
+            effects.Configure(recipes, GameContentAuthoringEditorAssets.SplitCsv(state.PrerequisitesCsv), GameContentAuthoringEditorAssets.SplitCsv(state.ExclusionsCsv));
+            root.Configure(state.UpgradeId, state.DisplayName, state.Icon, state.Description, GameContentAuthoringEditorAssets.SplitCsv(state.TagsCsv), economy, effects);
+
+            MarkDirty(economy);
+            MarkDirty(effects);
+            MarkDirty(root);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            return new GameContentCreationResult(true, "Saved upgrade definition " + root.Id + ".", root);
         }
 
         public static void DestroyTransient(RunUpgradeDefinitionAsset recipe)
@@ -447,6 +507,22 @@ namespace Deucarian.RunUpgrades.Editor
             effects.Configure(recipes, GameContentAuthoringEditorAssets.SplitCsv(state.PrerequisitesCsv), GameContentAuthoringEditorAssets.SplitCsv(state.ExclusionsCsv));
             root.Configure(state.UpgradeId, state.DisplayName, state.Icon, state.Description, GameContentAuthoringEditorAssets.SplitCsv(state.TagsCsv), economy, effects);
             return root;
+        }
+
+        private static T EnsureSectionAsset<T>(RunUpgradeDefinitionAsset root, T existing, string suffix) where T : ScriptableObject
+        {
+            if (existing != null)
+                return existing;
+
+            T section = ScriptableObject.CreateInstance<T>();
+            GameContentAuthoringEditorAssets.AddSubAsset(section, root, root.name + "_" + suffix);
+            return section;
+        }
+
+        private static void MarkDirty(UnityEngine.Object target)
+        {
+            if (target != null)
+                EditorUtility.SetDirty(target);
         }
 
         private static string GetUpgradeFolder(RunUpgradeAuthoringState state)

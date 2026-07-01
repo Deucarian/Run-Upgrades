@@ -12,6 +12,7 @@
     "com.deucarian.gameplay-foundation": "0.1.0",
     "com.deucarian.attacks": "0.1.0",
     "com.deucarian.weapon-systems": "0.1.0",
+    "com.deucarian.editor": "1.0.0",
     "com.deucarian.game-content-authoring": "0.1.0"
   }
 }
