@@ -1,0 +1,27 @@
+{
+  "packageId": "com.deucarian.run-upgrades",
+  "displayName": "Deucarian Run Upgrades",
+  "ownedCapabilities": [],
+  "runtimeAssemblies": [
+    "Deucarian.RunUpgrades",
+    "Deucarian.RunUpgrades.Authoring"
+  ],
+  "editorAssemblies": [
+    "Deucarian.RunUpgrades.Editor"
+  ],
+  "sampleAssemblies": [],
+  "testAssemblies": [
+    "Deucarian.RunUpgrades.Tests"
+  ],
+  "requiredDependencies": [
+    "com.deucarian.gameplay-foundation",
+    "com.deucarian.attacks",
+    "com.deucarian.weapon-systems",
+    "com.deucarian.editor",
+    "com.deucarian.game-content-authoring"
+  ],
+  "optionalVersionDefinedDependencies": [],
+  "allowedDirectDebugCalls": [],
+  "allowedDirectUnityObjectLifetimeCalls": [],
+  "expectedSamplesRoot": ""
+}
