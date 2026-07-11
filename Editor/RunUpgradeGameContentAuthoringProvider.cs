@@ -19,19 +19,27 @@ namespace Deucarian.RunUpgrades.Editor
         }
     }
 
-    internal sealed class RunUpgradeAuthoringProvider : IGameContentAuthoringProvider, IGameContentAuthoringSurfaceProvider
+    internal sealed class RunUpgradeAuthoringProvider : IGameContentAuthoringProvider, IGameContentAuthoringSurfaceProvider, IGameContentAuthoringLensProvider
     {
         private readonly RunUpgradeAuthoringState _state = new RunUpgradeAuthoringState();
         private readonly RunUpgradeGameContentPreviewController _preview = new RunUpgradeGameContentPreviewController();
         private readonly RunUpgradeProviderV2State _v2State = new RunUpgradeProviderV2State();
         private readonly RunUpgradeProviderV2View _v2View = new RunUpgradeProviderV2View();
+        private readonly UpgradePackAwareLensState _packState = new UpgradePackAwareLensState();
 
         public string ProviderId => "com.deucarian.run-upgrades.upgrade";
-        public string DisplayName => "Upgrade";
-        public string Description => "Create a root RunUpgradeDefinition with economy and effect sections.";
+        public string DisplayName => "Upgrades";
+        public string Description => "Inspect upgrade-capable records or author standalone Run Upgrade assets in Project Content.";
         public int SortOrder => 140;
         public bool Enabled => true;
-        public void OnSelected() { _v2State.ResetProviderSession(); }
+        public GameContentLensDescriptor Lens { get; } = new GameContentLensDescriptor(
+            "upgrade",
+            "Upgrades",
+            "Progression",
+            "upgrade",
+            400,
+            new[] { GameContentRecordCapabilities.Upgrade });
+        public void OnSelected() { _v2State.ResetProviderSession(); _packState.Browser.SearchText = string.Empty; }
         public void DrawPreview(GameContentAuthoringPreviewContext context) { _preview.Draw(context, _state); }
         public void StopPreview()
         {
@@ -41,6 +49,11 @@ namespace Deucarian.RunUpgrades.Editor
 
         public void DrawCustomAuthoringSurface(GameContentAuthoringSurfaceContext context)
         {
+            if (context.PackContext != null && !context.PackContext.IsProjectContent)
+            {
+                UpgradePackAwareLensView.Draw(context, Lens, _packState);
+                return;
+            }
             _v2View.Draw(context, _state, _preview, _v2State);
         }
 

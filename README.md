@@ -8,6 +8,14 @@ Runtime dependency: `com.deucarian.gameplay-foundation`.
 
 The package is suitable for Idle Auto Defense and classic Tower Defense because it drafts abstract choices and returns explicit effect descriptors; games decide how those effects mutate their own runtime state.
 
+## Game Content Authoring
+
+Run Upgrades contributes the `Upgrades` lens to `Tools/Deucarian/Game Content Authoring`. It inspects immutable Upgrade-capable records from the globally selected pack and provides semantic filters for Weapon Upgrade, Passive, Pickup / Magnet, Mutation, Evolution, and Meta Upgrade capabilities without duplicating the underlying record.
+
+The common projection shows description, category, rarity, weight, rank limit, effect, amount, target, prerequisites, class gates, references, and comparison text. Template packages register `IGameContentRecordProjectionAdapter<UpgradeContentRecordProjection>` adapters and retain ownership of their schema and game-specific fields. External JSON sources are read-only, preserve canonical pack-scoped identity, and support reference and compatible-lens navigation.
+
+Selecting `Project Content` preserves the existing standalone `RunUpgradeDefinitionAsset` creation and editing workflow under `Assets/GameContent`. Creation is unavailable for read-only packs, All Packs, and contexts without an explicit writable backend.
+
 ## Install
 
 Stable:
