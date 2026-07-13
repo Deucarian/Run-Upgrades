@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Deucarian.GameplayFoundation;
 using NUnit.Framework;
@@ -128,6 +129,175 @@ namespace Deucarian.RunUpgrades.Tests
         }
 
         [Test]
+        public void DraftGroupIdsUseStableOrdinalValueSemantics()
+        {
+            var first = new RunUpgradeDraftGroupId("group.weapon.damage");
+            var same = new RunUpgradeDraftGroupId("group.weapon.damage");
+            var other = new RunUpgradeDraftGroupId("group.weapon.cadence");
+
+            Assert.AreEqual("group.weapon.damage", first.Value);
+            Assert.AreEqual(first, same);
+            Assert.AreEqual(first.GetHashCode(), same.GetHashCode());
+            Assert.AreNotEqual(first, other);
+            Assert.Throws<ArgumentException>(() => new RunUpgradeDraftGroupId(string.Empty));
+            Assert.Throws<ArgumentException>(() => new RunUpgradeDraftGroupId(" group.weapon.damage"));
+            Assert.Throws<ArgumentException>(() => new RunUpgradeDraftGroupId("Group.Weapon.Damage"));
+        }
+
+        [Test]
+        public void DraftOptionsValidateIdsWeightsAndExplicitGroups()
+        {
+            RunUpgradeDraftOption defaultGroup = Option("valid", 2.5d);
+            Assert.AreEqual("valid", defaultGroup.DedupeGroup.Value);
+
+            Assert.Throws<ArgumentException>(() => new RunUpgradeDraftOption(default, 1d));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new RunUpgradeDraftOption(Id("zero"), 0d));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new RunUpgradeDraftOption(Id("negative"), -1d));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new RunUpgradeDraftOption(Id("nan"), double.NaN));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new RunUpgradeDraftOption(Id("positive-infinity"), double.PositiveInfinity));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new RunUpgradeDraftOption(Id("negative-infinity"), double.NegativeInfinity));
+            Assert.Throws<ArgumentException>(() => new RunUpgradeDraftOption(Id("empty-group"), 1d, default));
+        }
+
+        [Test]
+        public void SelectorValidatesCollectionAndDuplicateOptionIds()
+        {
+            var request = new RunUpgradeDraftRequest(1, 3);
+            Assert.Throws<ArgumentNullException>(() => RunUpgradeDraftSelector.Select(null, request));
+            Assert.Throws<ArgumentNullException>(() => RunUpgradeDraftSelector.Select(new[] { Option("valid") }, null));
+            Assert.Throws<ArgumentException>(() => RunUpgradeDraftSelector.Select(new[] { default(RunUpgradeDraftOption) }, request));
+            Assert.Throws<ArgumentException>(() => RunUpgradeDraftSelector.Select(new[] { Option("duplicate"), Option("duplicate") }, request));
+        }
+
+        [Test]
+        public void SelectorIsDeterministicAndCallerOrderingIsPartOfInput()
+        {
+            RunUpgradeDraftOption[] ordered = { Option("first"), Option("second") };
+            RunUpgradeDraftOption[] reversed = { Option("second"), Option("first") };
+            var request = new RunUpgradeDraftRequest(1, 23);
+
+            string first = SelectionIds(ordered, request);
+            Assert.AreEqual(first, SelectionIds(ordered, request));
+            Assert.AreNotEqual(first, SelectionIds(reversed, request));
+        }
+
+        [Test]
+        public void SelectorRerollChangesResultsDeterministically()
+        {
+            RunUpgradeDraftOption[] options =
+            {
+                Option("a", 1d), Option("b", 2d), Option("c", 3d), Option("d", 4d), Option("e", 5d)
+            };
+
+            string first = SelectionIds(options, new RunUpgradeDraftRequest(3, 77, 0));
+            string rerolled = SelectionIds(options, new RunUpgradeDraftRequest(3, 77, 1));
+            Assert.AreNotEqual(first, rerolled);
+            Assert.AreEqual(rerolled, SelectionIds(options, new RunUpgradeDraftRequest(3, 77, 1)));
+        }
+
+        [Test]
+        public void SelectorSupportsFractionalAndVeryLargeWeightsDeterministically()
+        {
+            RunUpgradeDraftOption[] fractional =
+            {
+                Option("fractional.low", 0.125d),
+                Option("fractional.mid", 2.75d),
+                Option("fractional.high", 9.5d)
+            };
+            RunUpgradeDraftOption[] veryLarge =
+            {
+                Option("large.first", double.MaxValue),
+                Option("large.second", double.MaxValue),
+                Option("large.small", 0.5d)
+            };
+
+            var fractionalRequest = new RunUpgradeDraftRequest(2, 20260623);
+            var largeRequest = new RunUpgradeDraftRequest(2, 20260624);
+            Assert.AreEqual(SelectionIds(fractional, fractionalRequest), SelectionIds(fractional, fractionalRequest));
+            Assert.AreEqual(SelectionIds(veryLarge, largeRequest), SelectionIds(veryLarge, largeRequest));
+            Assert.AreEqual(2, RunUpgradeDraftSelector.Select(veryLarge, largeRequest).ChoiceIds.Count);
+        }
+
+        [Test]
+        public void SelectorAppliesAvailableLocksInOrderAndSkipsGroupConflicts()
+        {
+            RunUpgradeDraftGroupId shared = Group("shared");
+            RunUpgradeDraftOption[] options =
+            {
+                Option("a", 1d, shared),
+                Option("b", 1000d, shared),
+                Option("c"),
+                Option("d")
+            };
+            var request = new RunUpgradeDraftRequest(3, 9, 0, new[] { Id("a"), Id("b"), Id("missing"), Id("c") });
+
+            RunUpgradeDraftSelection selection = RunUpgradeDraftSelector.Select(options, request);
+            Assert.AreEqual("a,c,d", string.Join(",", selection.ChoiceIds.Select(id => id.Value).ToArray()));
+        }
+
+        [Test]
+        public void DraftRequestRetainsExistingDuplicateLockAndChoiceCountValidation()
+        {
+            Assert.Throws<ArgumentException>(() => new RunUpgradeDraftRequest(2, 1, lockedChoices: new[] { Id("a"), Id("a") }));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new RunUpgradeDraftRequest(0, 1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new RunUpgradeDraftRequest(-1, 1));
+        }
+
+        [Test]
+        public void SelectorRemovesEntireSelectedGroupAndReturnsFewerWhenExhausted()
+        {
+            RunUpgradeDraftGroupId shared = Group("shared");
+            RunUpgradeDraftOption[] options =
+            {
+                Option("a", 1d, shared),
+                Option("b", 2d, shared),
+                Option("c", 3d, shared)
+            };
+
+            RunUpgradeDraftSelection selection = RunUpgradeDraftSelector.Select(options, new RunUpgradeDraftRequest(3, 4));
+            Assert.AreEqual(1, selection.ChoiceIds.Count);
+            Assert.AreEqual(0, RunUpgradeDraftSelector.Select(Array.Empty<RunUpgradeDraftOption>(), new RunUpgradeDraftRequest(3, 4)).ChoiceIds.Count);
+        }
+
+        [Test]
+        public void DefaultAndExplicitIndependentGroupsAllowDistinctChoices()
+        {
+            RunUpgradeDraftOption[] options =
+            {
+                Option("default.a"),
+                Option("default.b"),
+                Option("explicit.a", 1d, Group("group.a")),
+                Option("explicit.b", 1d, Group("group.b"))
+            };
+
+            RunUpgradeDraftSelection selection = RunUpgradeDraftSelector.Select(options, new RunUpgradeDraftRequest(4, 18));
+            Assert.AreEqual(4, selection.ChoiceIds.Count);
+        }
+
+        [TestCase(123, 0, "direct.cadence,direct.damage,enemy.pacing")]
+        [TestCase(1, 0, "projectile.speed,enemy.pacing,direct.damage")]
+        [TestCase(2, 0, "direct.damage,enemy.pacing,projectile.speed")]
+        [TestCase(77, 0, "enemy.pacing,direct.damage,direct.cadence")]
+        [TestCase(77, 1, "objective.shield,projectile.speed,direct.cadence")]
+        public void LegacyIntegralDraftOutputsRemainExact(int seed, int reroll, string expected)
+        {
+            Assert.AreEqual(expected, DraftIds(Catalog(), seed, reroll));
+        }
+
+        [Test]
+        public void LegacyLockedIntegralDraftOutputRemainsExact()
+        {
+            RunUpgradeDraft draft = RunUpgradeDraftService.Generate(
+                Catalog(),
+                new RunUpgradeState(),
+                new RunUpgradeDraftRequest(3, 42, 3, new[] { Id("projectile.speed") }));
+
+            Assert.AreEqual(
+                "projectile.speed,direct.damage,enemy.pacing",
+                string.Join(",", draft.Choices.Select(choice => choice.Id.Value).ToArray()));
+        }
+
+        [Test]
         public void SelectingUpgradeUpdatesState()
         {
             RunUpgradeCatalog catalog = Catalog();
@@ -196,6 +366,24 @@ namespace Deucarian.RunUpgrades.Tests
             RunUpgradeDraft draft = RunUpgradeDraftService.Generate(catalog, new RunUpgradeState(), new RunUpgradeDraftRequest(count, seed, reroll));
             return string.Join(",", draft.Choices.Select(choice => choice.Id.Value).ToArray());
         }
+
+        private static string SelectionIds(IReadOnlyList<RunUpgradeDraftOption> options, RunUpgradeDraftRequest request)
+        {
+            RunUpgradeDraftSelection selection = RunUpgradeDraftSelector.Select(options, request);
+            return string.Join(",", selection.ChoiceIds.Select(id => id.Value).ToArray());
+        }
+
+        private static RunUpgradeDraftOption Option(string id, double weight = 1d)
+        {
+            return new RunUpgradeDraftOption(Id(id), weight);
+        }
+
+        private static RunUpgradeDraftOption Option(string id, double weight, RunUpgradeDraftGroupId group)
+        {
+            return new RunUpgradeDraftOption(Id(id), weight, group);
+        }
+
+        private static RunUpgradeDraftGroupId Group(string value) => new RunUpgradeDraftGroupId(value);
 
         private static RunUpgradeDefinition Upgrade(string id, RunUpgradeRarity rarity = RunUpgradeRarity.Common, int weight = 1, int maxRank = 3, RunUpgradeEffectDescriptor[] effects = null, RunUpgradeId[] prerequisites = null, RunUpgradeId[] exclusions = null)
         {
