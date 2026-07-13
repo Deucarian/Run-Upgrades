@@ -18,6 +18,20 @@ namespace Deucarian.RunUpgrades
         public override string ToString() => Value;
     }
 
+    /// <summary>Stable identifier for a mutually exclusive draft-option group.</summary>
+    public readonly struct RunUpgradeDraftGroupId : IEquatable<RunUpgradeDraftGroupId>, IComparable<RunUpgradeDraftGroupId>
+    {
+        private readonly ContentId _value;
+        public RunUpgradeDraftGroupId(string value) { _value = new ContentId(value); }
+        public string Value => _value.Value;
+        public bool IsEmpty => _value.IsEmpty;
+        public bool Equals(RunUpgradeDraftGroupId other) => _value.Equals(other._value);
+        public override bool Equals(object obj) => obj is RunUpgradeDraftGroupId other && Equals(other);
+        public override int GetHashCode() => _value.GetHashCode();
+        public int CompareTo(RunUpgradeDraftGroupId other) => _value.CompareTo(other._value);
+        public override string ToString() => Value;
+    }
+
     /// <summary>Stable identifier for an adapter-owned effect kind.</summary>
     public readonly struct RunUpgradeEffectId : IEquatable<RunUpgradeEffectId>, IComparable<RunUpgradeEffectId>
     {
@@ -203,6 +217,227 @@ namespace Deucarian.RunUpgrades
         }
     }
 
+    /// <summary>Validated input for game-owned candidates participating in a run-upgrade draft.</summary>
+    public readonly struct RunUpgradeDraftOption
+    {
+        public RunUpgradeDraftOption(RunUpgradeId id, double weight)
+            : this(id, weight, DefaultGroup(id))
+        {
+        }
+
+        public RunUpgradeDraftOption(RunUpgradeId id, double weight, RunUpgradeDraftGroupId dedupeGroup)
+        {
+            if (id.IsEmpty) throw new ArgumentException("Draft option id cannot be empty.", nameof(id));
+            if (weight <= 0d || double.IsNaN(weight) || double.IsInfinity(weight))
+                throw new ArgumentOutOfRangeException(nameof(weight), "Draft option weight must be positive and finite.");
+            if (dedupeGroup.IsEmpty) throw new ArgumentException("Draft option dedupe group cannot be empty.", nameof(dedupeGroup));
+            Id = id;
+            Weight = weight;
+            DedupeGroup = dedupeGroup;
+        }
+
+        public RunUpgradeId Id { get; }
+        public double Weight { get; }
+        public RunUpgradeDraftGroupId DedupeGroup { get; }
+
+        private static RunUpgradeDraftGroupId DefaultGroup(RunUpgradeId id)
+        {
+            if (id.IsEmpty) throw new ArgumentException("Draft option id cannot be empty.", nameof(id));
+            return new RunUpgradeDraftGroupId(id.Value);
+        }
+    }
+
+    /// <summary>Ordered identifiers selected for a deterministic run-upgrade draft.</summary>
+    public sealed class RunUpgradeDraftSelection
+    {
+        internal RunUpgradeDraftSelection(IReadOnlyList<RunUpgradeId> choiceIds)
+        {
+            ChoiceIds = Copy(choiceIds);
+        }
+
+        public IReadOnlyList<RunUpgradeId> ChoiceIds { get; }
+
+        private static RunUpgradeId[] Copy(IReadOnlyList<RunUpgradeId> source)
+        {
+            if (source == null || source.Count == 0) return Array.Empty<RunUpgradeId>();
+            var copy = new RunUpgradeId[source.Count];
+            for (int i = 0; i < source.Count; i++) copy[i] = source[i];
+            return copy;
+        }
+    }
+
+    /// <summary>
+    /// Deterministic weighted selection for caller-filtered options. Caller ordering is part of the deterministic input.
+    /// </summary>
+    public static class RunUpgradeDraftSelector
+    {
+        public static RunUpgradeDraftSelection Select(IReadOnlyList<RunUpgradeDraftOption> options, RunUpgradeDraftRequest request)
+        {
+            if (options == null) throw new ArgumentNullException(nameof(options));
+            if (request == null) throw new ArgumentNullException(nameof(request));
+
+            var ordered = new RunUpgradeDraftOption[options.Count];
+            var optionIndexes = new Dictionary<RunUpgradeId, int>();
+            for (int i = 0; i < options.Count; i++)
+            {
+                RunUpgradeDraftOption option = options[i];
+                ValidateOption(option, i);
+                if (optionIndexes.ContainsKey(option.Id))
+                    throw new ArgumentException("Duplicate draft option id: " + option.Id, nameof(options));
+                optionIndexes.Add(option.Id, i);
+                ordered[i] = option;
+            }
+
+            var choices = new List<RunUpgradeId>(request.ChoiceCount);
+            var selectedIds = new HashSet<RunUpgradeId>();
+            var selectedGroups = new HashSet<RunUpgradeDraftGroupId>();
+            for (int i = 0; i < request.LockedChoices.Count && choices.Count < request.ChoiceCount; i++)
+            {
+                RunUpgradeId lockedId = request.LockedChoices[i];
+                if (!optionIndexes.TryGetValue(lockedId, out int optionIndex)) continue;
+                RunUpgradeDraftOption option = ordered[optionIndex];
+                if (selectedIds.Contains(option.Id) || selectedGroups.Contains(option.DedupeGroup)) continue;
+                selectedIds.Add(option.Id);
+                selectedGroups.Add(option.DedupeGroup);
+                choices.Add(option.Id);
+            }
+
+            var random = new DeterministicRandom(Mix(request.Seed, request.RerollIndex));
+            while (choices.Count < request.ChoiceCount)
+            {
+                int selectedIndex = PickWeighted(ordered, selectedIds, selectedGroups, random);
+                if (selectedIndex < 0) break;
+                RunUpgradeDraftOption selected = ordered[selectedIndex];
+                selectedIds.Add(selected.Id);
+                selectedGroups.Add(selected.DedupeGroup);
+                choices.Add(selected.Id);
+            }
+
+            return new RunUpgradeDraftSelection(choices);
+        }
+
+        private static void ValidateOption(RunUpgradeDraftOption option, int index)
+        {
+            if (option.Id.IsEmpty) throw new ArgumentException("Draft option at index " + index + " has an empty id.", nameof(option));
+            if (option.Weight <= 0d || double.IsNaN(option.Weight) || double.IsInfinity(option.Weight))
+                throw new ArgumentOutOfRangeException(nameof(option), "Draft option at index " + index + " has a non-positive or non-finite weight.");
+            if (option.DedupeGroup.IsEmpty)
+                throw new ArgumentException("Draft option at index " + index + " has an empty dedupe group.", nameof(option));
+        }
+
+        private static int PickWeighted(
+            IReadOnlyList<RunUpgradeDraftOption> options,
+            HashSet<RunUpgradeId> selectedIds,
+            HashSet<RunUpgradeDraftGroupId> selectedGroups,
+            IRandomSource random)
+        {
+            bool useIntegerPath = true;
+            long integerTotal = 0L;
+            int availableCount = 0;
+            for (int i = 0; i < options.Count; i++)
+            {
+                RunUpgradeDraftOption option = options[i];
+                if (!IsAvailable(option, selectedIds, selectedGroups)) continue;
+                availableCount++;
+                if (option.Weight != Math.Floor(option.Weight) || option.Weight > int.MaxValue)
+                {
+                    useIntegerPath = false;
+                    continue;
+                }
+
+                if (!useIntegerPath) continue;
+                integerTotal += (long)option.Weight;
+                if (integerTotal > int.MaxValue) useIntegerPath = false;
+            }
+
+            if (availableCount == 0) return -1;
+            if (useIntegerPath)
+                return PickWeightedInteger(options, selectedIds, selectedGroups, random, (int)integerTotal);
+            return PickWeightedDouble(options, selectedIds, selectedGroups, random);
+        }
+
+        private static int PickWeightedInteger(
+            IReadOnlyList<RunUpgradeDraftOption> options,
+            HashSet<RunUpgradeId> selectedIds,
+            HashSet<RunUpgradeDraftGroupId> selectedGroups,
+            IRandomSource random,
+            int totalWeight)
+        {
+            int roll = random.Range(0, totalWeight);
+            int cursor = 0;
+            for (int i = 0; i < options.Count; i++)
+            {
+                RunUpgradeDraftOption option = options[i];
+                if (!IsAvailable(option, selectedIds, selectedGroups)) continue;
+                cursor += (int)option.Weight;
+                if (roll < cursor) return i;
+            }
+            return -1;
+        }
+
+        private static int PickWeightedDouble(
+            IReadOnlyList<RunUpgradeDraftOption> options,
+            HashSet<RunUpgradeId> selectedIds,
+            HashSet<RunUpgradeDraftGroupId> selectedGroups,
+            IRandomSource random)
+        {
+            double totalWeight = 0d;
+            double maximumWeight = 0d;
+            int lastAvailableIndex = -1;
+            for (int i = 0; i < options.Count; i++)
+            {
+                RunUpgradeDraftOption option = options[i];
+                if (!IsAvailable(option, selectedIds, selectedGroups)) continue;
+                totalWeight += option.Weight;
+                maximumWeight = Math.Max(maximumWeight, option.Weight);
+                lastAvailableIndex = i;
+            }
+
+            bool normalize = double.IsInfinity(totalWeight);
+            if (normalize)
+            {
+                totalWeight = 0d;
+                for (int i = 0; i < options.Count; i++)
+                {
+                    RunUpgradeDraftOption option = options[i];
+                    if (IsAvailable(option, selectedIds, selectedGroups))
+                        totalWeight += option.Weight / maximumWeight;
+                }
+            }
+
+            double roll = random.Range(0d, totalWeight);
+            double cursor = 0d;
+            for (int i = 0; i < options.Count; i++)
+            {
+                RunUpgradeDraftOption option = options[i];
+                if (!IsAvailable(option, selectedIds, selectedGroups)) continue;
+                cursor += normalize ? option.Weight / maximumWeight : option.Weight;
+                if (roll < cursor) return i;
+            }
+            return lastAvailableIndex;
+        }
+
+        private static bool IsAvailable(
+            RunUpgradeDraftOption option,
+            HashSet<RunUpgradeId> selectedIds,
+            HashSet<RunUpgradeDraftGroupId> selectedGroups)
+        {
+            return !selectedIds.Contains(option.Id) && !selectedGroups.Contains(option.DedupeGroup);
+        }
+
+        private static int Mix(int seed, int rerollIndex)
+        {
+            unchecked
+            {
+                uint value = (uint)seed;
+                value ^= (uint)(rerollIndex + 0x9E3779B9);
+                value *= 0x85EBCA6B;
+                value ^= value >> 13;
+                return (int)value;
+            }
+        }
+    }
+
     public sealed class RunUpgradeDraft
     {
         public RunUpgradeDraft(IReadOnlyList<RunUpgradeDefinition> choices)
@@ -226,21 +461,20 @@ namespace Deucarian.RunUpgrades
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (request == null) throw new ArgumentNullException(nameof(request));
-            var choices = new List<RunUpgradeDefinition>(request.ChoiceCount);
-            var used = new HashSet<RunUpgradeId>();
-            for (int i = 0; i < request.LockedChoices.Count && choices.Count < request.ChoiceCount; i++)
+            var options = new List<RunUpgradeDraftOption>(catalog.Definitions.Count);
+            for (int i = 0; i < catalog.Definitions.Count; i++)
             {
-                if (!catalog.TryGet(request.LockedChoices[i], out RunUpgradeDefinition locked)) continue;
-                if (GetAvailability(catalog, state, locked) != RunUpgradeSelectionStatus.Selected) continue;
-                if (used.Add(locked.Id)) choices.Add(locked);
+                RunUpgradeDefinition definition = catalog.Definitions[i];
+                if (GetAvailability(catalog, state, definition) == RunUpgradeSelectionStatus.Selected)
+                    options.Add(new RunUpgradeDraftOption(definition.Id, definition.Weight));
             }
-            var random = new DeterministicRandom(Mix(request.Seed, request.RerollIndex));
-            while (choices.Count < request.ChoiceCount)
+
+            RunUpgradeDraftSelection selection = RunUpgradeDraftSelector.Select(options, request);
+            var choices = new List<RunUpgradeDefinition>(selection.ChoiceIds.Count);
+            for (int i = 0; i < selection.ChoiceIds.Count; i++)
             {
-                RunUpgradeDefinition picked = PickWeighted(catalog, state, used, random);
-                if (picked == null) break;
-                used.Add(picked.Id);
-                choices.Add(picked);
+                if (catalog.TryGet(selection.ChoiceIds[i], out RunUpgradeDefinition definition))
+                    choices.Add(definition);
             }
             return new RunUpgradeDraft(choices);
         }
@@ -263,39 +497,6 @@ namespace Deucarian.RunUpgrades
             return RunUpgradeSelectionStatus.Selected;
         }
 
-        private static RunUpgradeDefinition PickWeighted(RunUpgradeCatalog catalog, RunUpgradeState state, HashSet<RunUpgradeId> used, IRandomSource random)
-        {
-            int total = 0;
-            for (int i = 0; i < catalog.Definitions.Count; i++)
-            {
-                RunUpgradeDefinition definition = catalog.Definitions[i];
-                if (used.Contains(definition.Id) || GetAvailability(catalog, state, definition) != RunUpgradeSelectionStatus.Selected) continue;
-                checked { total += definition.Weight; }
-            }
-            if (total == 0) return null;
-            int roll = random.Range(0, total);
-            int cursor = 0;
-            for (int i = 0; i < catalog.Definitions.Count; i++)
-            {
-                RunUpgradeDefinition definition = catalog.Definitions[i];
-                if (used.Contains(definition.Id) || GetAvailability(catalog, state, definition) != RunUpgradeSelectionStatus.Selected) continue;
-                cursor += definition.Weight;
-                if (roll < cursor) return definition;
-            }
-            return null;
-        }
-
-        private static int Mix(int seed, int rerollIndex)
-        {
-            unchecked
-            {
-                uint value = (uint)seed;
-                value ^= (uint)(rerollIndex + 0x9E3779B9);
-                value *= 0x85EBCA6B;
-                value ^= value >> 13;
-                return (int)value;
-            }
-        }
     }
 
     public readonly struct RunUpgradeRankSnapshot
