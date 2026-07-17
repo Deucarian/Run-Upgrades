@@ -1,6 +1,7 @@
 {
   "packageId": "com.deucarian.run-upgrades",
   "displayName": "Deucarian Run Upgrades",
+  "samplePolicy": "playable-scene",
   "ownedCapabilities": [],
   "runtimeAssemblies": [
     "Deucarian.RunUpgrades",
@@ -9,7 +10,9 @@
   "editorAssemblies": [
     "Deucarian.RunUpgrades.Editor"
   ],
-  "sampleAssemblies": [],
+  "sampleAssemblies": [
+    "Deucarian.RunUpgrades.Samples"
+  ],
   "testAssemblies": [
     "Deucarian.RunUpgrades.Tests"
   ],
@@ -23,5 +26,5 @@
   "optionalVersionDefinedDependencies": [],
   "allowedDirectDebugCalls": [],
   "allowedDirectUnityObjectLifetimeCalls": [],
-  "expectedSamplesRoot": ""
+  "expectedSamplesRoot": "Samples~"
 }
