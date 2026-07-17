@@ -1,0 +1,16 @@
+{
+  "name": "Deucarian.RunUpgrades.Samples",
+  "rootNamespace": "Deucarian.RunUpgrades.Samples",
+  "references": [
+    "Deucarian.RunUpgrades"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
