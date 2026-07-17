@@ -12,35 +12,9 @@ using UnityEngine;
 
 namespace Deucarian.RunUpgrades.Editor
 {
-    internal sealed class RunUpgradeProviderV2State
+    internal sealed class RunUpgradeProviderV2State : GameContentAuthoringProviderSessionState<RunUpgradeAuthoringState>
     {
-        public string SearchText = string.Empty;
-        public bool Creating;
-        public int DetailPage;
-        public int WizardStep;
         public int SelectedRank = 1;
-        public Vector2 ListScroll;
-        public Vector2 DetailScroll;
-        public Vector2 PreviewScroll;
-        public bool PreviewMuted = true;
-        public bool PreviewLoop = true;
-        public bool PreviewPlaying = true;
-        public GameContentAuthoringActionPreviewRenderMode PreviewRenderMode = GameContentAuthoringActionPreviewRenderMode.Game;
-        public double PreviewStartTime;
-        public float PausedNormalizedTime = 0.5f;
-        public string ActivePreviewKey = string.Empty;
-        public string PreviewStatus = "Preview idle";
-        public RunUpgradeAuthoringState EditingState;
-        public GameContentAuthoringObjectEditorContext EditingContext;
-        public GameContentCreationResult LastEditResult;
-
-        public void StopPreview()
-        {
-            PreviewPlaying = false;
-            PreviewStartTime = 0d;
-            PausedNormalizedTime = 0.5f;
-            PreviewStatus = "Preview stopped";
-        }
 
         public void BeginCreate()
         {
@@ -52,39 +26,9 @@ namespace Deucarian.RunUpgrades.Editor
             PreviewStatus = "Previewing draft upgrade";
         }
 
-        public void ResetProviderSession()
+        protected override void OnProviderSessionReset()
         {
-            Creating = false;
-            DetailPage = 0;
-            WizardStep = 0;
             SelectedRank = 1;
-            ListScroll = Vector2.zero;
-            DetailScroll = Vector2.zero;
-            PreviewScroll = Vector2.zero;
-            ActivePreviewKey = string.Empty;
-            PreviewStatus = "Preview idle";
-            ClearEditingState();
-        }
-
-        public void SetPreviewSource(string key, RunUpgradeGameContentPreviewController controller)
-        {
-            key = key ?? string.Empty;
-            if (string.Equals(ActivePreviewKey, key, StringComparison.Ordinal))
-                return;
-
-            controller?.Stop();
-            ActivePreviewKey = key;
-            PreviewPlaying = true;
-            PreviewStartTime = EditorApplication.timeSinceStartup;
-            PausedNormalizedTime = 0f;
-            PreviewStatus = "Previewing";
-        }
-
-        public void ClearEditingState()
-        {
-            EditingState = null;
-            EditingContext = null;
-            LastEditResult = null;
         }
     }
 
@@ -181,7 +125,7 @@ namespace Deucarian.RunUpgrades.Editor
                 : context.SelectedItem == null
                     ? string.Empty
                     : context.SelectedItem.Key;
-            state.SetPreviewSource(key, previewController);
+            state.SetPreviewSource(key, () => previewController?.Stop());
         }
 
         private static void DrawUpgradeList(GameContentAuthoringSurfaceContext context, RunUpgradeProviderV2State state, IReadOnlyList<RunUpgradeProviderV2ListItem> items)
@@ -319,7 +263,10 @@ namespace Deucarian.RunUpgrades.Editor
                     break;
             }
 
-            DrawValidationIssues(validation);
+            GameContentAuthoringProviderGUI.DrawValidationIssues(
+                validation,
+                GameContentAuthoringValidationSummaryStyle.Counts,
+                false);
         }
 
         private static void HandleEditCommand(GameContentAuthoringSurfaceContext context, RunUpgradeProviderV2State state, RunUpgradeDefinitionAsset asset, GameContentAuthoringCommand command)
@@ -406,7 +353,10 @@ namespace Deucarian.RunUpgrades.Editor
                     break;
             }
 
-            DrawValidationIssues(validation);
+            GameContentAuthoringProviderGUI.DrawValidationIssues(
+                validation,
+                GameContentAuthoringValidationSummaryStyle.Counts,
+                false);
             context.Authoring.DrawCreationResult();
         }
 
@@ -522,8 +472,8 @@ namespace Deucarian.RunUpgrades.Editor
                 Row("Content Packs", CountReverse(selectedItem, GameContentLibraryKind.ContentPack).ToString(CultureInfo.InvariantCulture)),
                 Row("Target", GetTargetAssetLabel(PrimaryEffect(state))));
 
-            DrawReferenceList("Used By", selectedItem == null ? null : selectedItem.ReverseReferences);
-            DrawReferenceList("Direct References", selectedItem == null ? null : selectedItem.DirectReferences);
+            GameContentAuthoringProviderGUI.DrawReferenceList("Used By", selectedItem == null ? null : selectedItem.ReverseReferences);
+            GameContentAuthoringProviderGUI.DrawReferenceList("Direct References", selectedItem == null ? null : selectedItem.DirectReferences);
         }
 
         private static void DrawAdvanced(GameContentAuthoringSurfaceContext context, RunUpgradeAuthoringState state, GameContentLibraryItem selectedItem, RunUpgradeDefinitionAsset asset)
@@ -546,7 +496,7 @@ namespace Deucarian.RunUpgrades.Editor
                 EditorGUILayout.LabelField(lines[i], DeucarianEditorStyles.MutedLabel);
 
             DrawSummaryRows(
-                Row("Readiness", BuildValidationSummary(validation)),
+                Row("Readiness", new GameContentAuthoringValidationSummary(validation).CountLabel),
                 Row("Target", GetTargetAssetLabel(PrimaryEffect(state))),
                 Row("Effect", BuildModifierBehavior(PrimaryEffect(state))),
                 Row("Ranks", Math.Max(1, state.MaxRank).ToString(CultureInfo.InvariantCulture)));
@@ -964,24 +914,6 @@ namespace Deucarian.RunUpgrades.Editor
             return null;
         }
 
-        private static void DrawReferenceList(string title, IReadOnlyList<GameContentLibraryReference> references)
-        {
-            EditorGUILayout.LabelField(title, DeucarianEditorStyles.SectionTitle);
-            if (references == null || references.Count == 0)
-            {
-                EditorGUILayout.LabelField("None", DeucarianEditorStyles.MutedLabel);
-                return;
-            }
-
-            for (int i = 0; i < references.Count; i++)
-            {
-                GameContentLibraryReference reference = references[i];
-                if (reference == null || reference.Target == null)
-                    continue;
-                EditorGUILayout.LabelField(reference.Target.DisplayName + " - " + reference.PropertyPath, DeucarianEditorStyles.MutedLabel);
-            }
-        }
-
         private static string BuildTargetReferenceSummary(GameContentLibraryItem selectedItem)
         {
             if (selectedItem == null || selectedItem.ReverseReferences.Count == 0)
@@ -1026,46 +958,14 @@ namespace Deucarian.RunUpgrades.Editor
             };
         }
 
-        private static void DrawValidationIssues(GameContentAuthoringValidationResult validation)
-        {
-            if (validation == null || validation.Issues.Count == 0)
-                return;
-
-            var messages = new List<string>();
-            for (int i = 0; i < validation.Issues.Count; i++)
-            {
-                GameContentAuthoringValidationIssue issue = validation.Issues[i];
-                if (issue.Severity == GameContentAuthoringValidationSeverity.Info)
-                    continue;
-                messages.Add((string.IsNullOrWhiteSpace(issue.Path) ? string.Empty : issue.Path + ": ") + issue.Message);
-            }
-
-            if (messages.Count == 0)
-                return;
-
-            DeucarianEditorStatus status = validation.ErrorCount > 0 ? DeucarianEditorStatus.Error : DeucarianEditorStatus.Warning;
-            DeucarianEditorStatusPanel.DrawValidationCard(BuildValidationSummary(validation), messages, status);
-        }
-
-        private static string BuildValidationSummary(GameContentAuthoringValidationResult validation)
-        {
-            if (validation == null)
-                return string.Empty;
-            return validation.ErrorCount.ToString(CultureInfo.InvariantCulture) + " blocker(s), "
-                + validation.WarningCount.ToString(CultureInfo.InvariantCulture) + " warning(s).";
-        }
-
         private static void DrawSummaryRows(params GameContentAuthoringPreviewRow[] rows)
         {
-            DrawSummaryRows((IReadOnlyList<GameContentAuthoringPreviewRow>)rows);
+            GameContentAuthoringProviderGUI.DrawSummaryRows((IReadOnlyList<GameContentAuthoringPreviewRow>)rows, true);
         }
 
         private static void DrawSummaryRows(IReadOnlyList<GameContentAuthoringPreviewRow> rows)
         {
-            if (rows == null || rows.Count == 0)
-                return;
-            for (int i = 0; i < rows.Count; i++)
-                DeucarianEditorFieldRow.Draw(rows[i].Label, () => EditorGUILayout.LabelField(rows[i].Value ?? string.Empty, DeucarianEditorStyles.MutedLabel));
+            GameContentAuthoringProviderGUI.DrawSummaryRows(rows, true);
         }
 
         private static void DrawSummaryRows(IReadOnlyList<GameContentAuthoringPreviewTimelineItem> items)

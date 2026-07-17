@@ -1,6 +1,6 @@
 {
   "name": "com.deucarian.run-upgrades",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "displayName": "Deucarian Run Upgrades",
   "description": "Pure C# roguelite run upgrade core plus Unity authoring assets/providers for definitions, drafts, choices, prerequisites, exclusions, and snapshots.",
   "unity": "6000.3",
@@ -13,10 +13,17 @@
   },
   "license": "MIT",
   "dependencies": {
-    "com.deucarian.gameplay-foundation": "0.1.0",
-    "com.deucarian.attacks": "0.1.0",
-    "com.deucarian.weapon-systems": "0.1.0",
-    "com.deucarian.editor": "1.0.0",
-    "com.deucarian.game-content-authoring": "0.1.0"
-  }
+    "com.deucarian.gameplay-foundation": "0.1.1",
+    "com.deucarian.attacks": "0.1.1",
+    "com.deucarian.weapon-systems": "0.1.1",
+    "com.deucarian.editor": "1.0.3",
+    "com.deucarian.game-content-authoring": "0.1.1"
+  },
+  "samples": [
+    {
+      "displayName": "Run Upgrade Draft",
+      "description": "Minimal scene and runtime example for drafting and selecting one run upgrade.",
+      "path": "Samples~/RunUpgradeDraft"
+    }
+  ]
 }
