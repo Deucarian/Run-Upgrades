@@ -29,7 +29,7 @@ namespace Deucarian.RunUpgrades.Editor
             RunUpgradeAuthoringState source = state.Creating ? draft : state.EditingState;
             if (source == null)
             {
-                EditorGUILayout.LabelField("Select an upgrade to preview.", DeucarianEditorStyles.MutedLabel);
+                DeucarianEditorTextGUI.LabelField("Select an upgrade to preview.", DeucarianEditorStyles.MutedLabel);
                 return;
             }
 

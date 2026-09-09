@@ -62,7 +62,7 @@ namespace Deucarian.RunUpgrades.Editor
             RunUpgradeDefinitionAsset asset = context.SelectedItem == null ? null : context.SelectedItem.Asset as RunUpgradeDefinitionAsset;
             if (asset == null || state.EditingState == null || state.EditingContext == null)
             {
-                EditorGUILayout.LabelField("Select an upgrade to edit.", DeucarianEditorStyles.MutedLabel);
+                DeucarianEditorTextGUI.LabelField("Select an upgrade to edit.", DeucarianEditorStyles.MutedLabel);
                 return;
             }
 

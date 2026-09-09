@@ -71,7 +71,7 @@ namespace Deucarian.RunUpgrades.Editor
         {
             IReadOnlyList<string> lines = RunUpgradeDefinitionAssetCreator.GetPreviewLines(state);
             for (int i = 0; i < lines.Count; i++)
-                EditorGUILayout.LabelField(lines[i], DeucarianEditorStyles.MutedLabel);
+                DeucarianEditorTextGUI.LabelField(lines[i], DeucarianEditorStyles.MutedLabel);
 
             RunUpgradeAuthoringFields.DrawSummaryRows(
                 RunUpgradeAuthoringSummary.Row("Readiness", new GameContentAuthoringValidationSummary(validation).CountLabel),
