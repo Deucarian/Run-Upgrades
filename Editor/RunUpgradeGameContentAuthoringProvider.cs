@@ -1,3 +1,4 @@
+using Deucarian.Editor;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -107,7 +108,7 @@ namespace Deucarian.RunUpgrades.Editor
             context.DrawSection("Preview", () =>
             {
                 foreach (string line in RunUpgradeDefinitionAssetCreator.GetPreviewLines(_state))
-                    EditorGUILayout.LabelField(line, context.MutedStyle);
+                    DeucarianEditorTextGUI.LabelField(line, context.MutedStyle);
                 GUILayout.Space(6f);
                 context.DrawValidation(report, "Ready to create one root RunUpgradeDefinition asset with economy and effects sub-assets.");
                 GUILayout.Space(8f);
@@ -125,7 +126,7 @@ namespace Deucarian.RunUpgrades.Editor
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorGUILayout.LabelField("Effect " + (index + 1).ToString(CultureInfo.InvariantCulture), context.SectionTitleStyle);
+                    DeucarianEditorTextGUI.LabelField("Effect " + (index + 1).ToString(CultureInfo.InvariantCulture), context.SectionTitleStyle);
                     if (context.DrawSecondaryButton("Remove", _state.Effects.Count > 1, GUILayout.Width(72f)))
                         remove = true;
                 }

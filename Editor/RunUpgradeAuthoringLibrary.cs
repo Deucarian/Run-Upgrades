@@ -18,7 +18,7 @@ namespace Deucarian.RunUpgrades.Editor
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.LabelField("Upgrades", DeucarianEditorStyles.SectionTitle);
+                DeucarianEditorTextGUI.LabelField("Upgrades", DeucarianEditorStyles.SectionTitle);
                 GUILayout.FlexibleSpace();
                 if (DeucarianEditorMiniToolbar.Button("Refresh", true, GUILayout.Width(62f), GUILayout.Height(22f)))
                     context.RefreshLibrary();
@@ -46,7 +46,7 @@ namespace Deucarian.RunUpgrades.Editor
             }
 
             if (shown == 0)
-                EditorGUILayout.LabelField(items.Count == 0 ? "No authored upgrades found." : "No upgrades match the current search.", DeucarianEditorStyles.MutedLabel);
+                DeucarianEditorTextGUI.LabelField(items.Count == 0 ? "No authored upgrades found." : "No upgrades match the current search.", DeucarianEditorStyles.MutedLabel);
             EditorGUILayout.EndScrollView();
         }
 

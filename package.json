@@ -1,6 +1,6 @@
 {
   "name": "com.deucarian.run-upgrades",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "displayName": "Deucarian Run Upgrades",
   "description": "Pure C# roguelite run upgrade core plus Unity authoring assets/providers for definitions, drafts, choices, prerequisites, exclusions, and snapshots.",
   "unity": "6000.3",
@@ -16,7 +16,7 @@
     "com.deucarian.gameplay-foundation": "0.1.1",
     "com.deucarian.attacks": "0.1.1",
     "com.deucarian.weapon-systems": "0.1.1",
-    "com.deucarian.editor": "1.0.3",
+    "com.deucarian.editor": "1.7.0",
     "com.deucarian.game-content-authoring": "0.1.1"
   },
   "samples": [

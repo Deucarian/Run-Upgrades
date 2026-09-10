@@ -16,9 +16,9 @@ namespace Deucarian.RunUpgrades.Editor
     {
         internal static void DrawHeader(string title, string subtitle, IReadOnlyList<DeucarianEditorStatusChip> chips)
         {
-            EditorGUILayout.LabelField(string.IsNullOrWhiteSpace(title) ? "Upgrade" : title, DeucarianEditorStyles.SectionTitle);
+            DeucarianEditorTextGUI.LabelField(string.IsNullOrWhiteSpace(title) ? "Upgrade" : title, DeucarianEditorStyles.SectionTitle);
             if (!string.IsNullOrWhiteSpace(subtitle))
-                EditorGUILayout.LabelField(subtitle, DeucarianEditorStyles.MutedLabel);
+                DeucarianEditorTextGUI.LabelField(subtitle, DeucarianEditorStyles.MutedLabel);
             DeucarianEditorStatusChipRow.Draw(chips);
         }
 
@@ -64,7 +64,7 @@ namespace Deucarian.RunUpgrades.Editor
                 {
                     using (new EditorGUILayout.HorizontalScope())
                     {
-                        EditorGUILayout.LabelField("Effect " + (i + 1).ToString(CultureInfo.InvariantCulture), DeucarianEditorStyles.SectionTitle);
+                        DeucarianEditorTextGUI.LabelField("Effect " + (i + 1).ToString(CultureInfo.InvariantCulture), DeucarianEditorStyles.SectionTitle);
                         GUILayout.FlexibleSpace();
                         if (DeucarianEditorMiniToolbar.Button("Remove", state.Effects.Count > 1, GUILayout.Width(70f), GUILayout.Height(22f)))
                             remove = true;
@@ -186,7 +186,7 @@ namespace Deucarian.RunUpgrades.Editor
             {
                 GameContentAuthoringPreviewTimelineItem item = items[i];
                 string detail = string.IsNullOrWhiteSpace(item.Detail) ? item.TimeLabel : item.Detail;
-                DeucarianEditorFieldRow.Draw(item.Label, () => EditorGUILayout.LabelField(detail ?? string.Empty, DeucarianEditorStyles.MutedLabel));
+                DeucarianEditorFieldRow.Draw(item.Label, () => DeucarianEditorTextGUI.LabelField(detail ?? string.Empty, DeucarianEditorStyles.MutedLabel));
             }
         }
 
@@ -195,7 +195,7 @@ namespace Deucarian.RunUpgrades.Editor
             T next = value;
             DeucarianEditorFieldRow.Draw(label, () =>
             {
-                next = (T)EditorGUILayout.ObjectField(value, typeof(T), false);
+                next = (T)DeucarianEditorInputGUI.ObjectField(value, typeof(T), false);
                 if (DeucarianEditorMiniToolbar.PingButton(next))
                     GUI.FocusControl(null);
             });

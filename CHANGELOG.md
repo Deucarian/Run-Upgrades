@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.2] - 2026-09-09
+
+- Use Editor-owned typography, fields, and actions throughout the authoring forms. Runtime upgrade behavior is unchanged.
+
 ## 0.1.1 - 2026-07-17
 
 - Aligned package metadata and the playable sample with the portfolio contract; direct Deucarian dependencies now use the coordinated patch versions.
