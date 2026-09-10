@@ -96,7 +96,7 @@ namespace Deucarian.RunUpgrades.Editor
                 DrawDetails,
                 DrawPreview,
                 record => MatchesSubtype(record, state.SubtypeFilter),
-                () => state.SubtypeFilter = (UpgradePackAwareSubtypeFilter)EditorGUILayout.Popup(
+                () => state.SubtypeFilter = (UpgradePackAwareSubtypeFilter)DeucarianEditorInputGUI.Popup(
                     (int)state.SubtypeFilter,
                     SubtypeLabels));
         }
@@ -129,13 +129,13 @@ namespace Deucarian.RunUpgrades.Editor
         {
             if (!GameContentRecordProjectionRegistry<UpgradeContentRecordProjection>.TryProject(record, out UpgradeContentRecordProjection projection))
             {
-                EditorGUILayout.HelpBox("No installed adapter exposes common Upgrade fields for this record.", MessageType.Warning);
+                DeucarianEditorTextGUI.HelpBox("No installed adapter exposes common Upgrade fields for this record.", MessageType.Warning);
                 return;
             }
 
-            EditorGUILayout.LabelField("Upgrade", DeucarianEditorStyles.SectionTitle);
+            DeucarianEditorTextGUI.LabelField("Upgrade", DeucarianEditorStyles.SectionTitle);
             if (!string.IsNullOrWhiteSpace(projection.Description))
-                EditorGUILayout.LabelField(projection.Description, EditorStyles.wordWrappedLabel);
+                DeucarianEditorTextGUI.LabelField(projection.Description, DeucarianEditorWorkbenchGUI.LabelStyle);
             GameContentRecordLensBrowser.DrawRow("Category", projection.Category);
             GameContentRecordLensBrowser.DrawRow("Rarity", Empty(projection.Rarity));
             Row("Weight", projection.Weight);
@@ -151,10 +151,10 @@ namespace Deucarian.RunUpgrades.Editor
 
         private static void DrawPreview(GameContentRecordDescriptor record)
         {
-            EditorGUILayout.LabelField(record.DisplayName, DeucarianEditorStyles.SectionTitle);
+            DeucarianEditorTextGUI.LabelField(record.DisplayName, DeucarianEditorStyles.SectionTitle);
             if (!GameContentRecordProjectionRegistry<UpgradeContentRecordProjection>.TryProject(record, out UpgradeContentRecordProjection projection))
             {
-                EditorGUILayout.HelpBox("Preview adapter unavailable.", MessageType.Warning);
+                DeucarianEditorTextGUI.HelpBox("Preview adapter unavailable.", MessageType.Warning);
                 return;
             }
 
@@ -165,7 +165,7 @@ namespace Deucarian.RunUpgrades.Editor
             Row("Per Rank", projection.EffectAmount);
             GameContentRecordLensBrowser.DrawRow("Target", Empty(projection.Target));
             if (!string.IsNullOrWhiteSpace(projection.ComparisonSummary))
-                EditorGUILayout.HelpBox(projection.ComparisonSummary, MessageType.Info);
+                DeucarianEditorTextGUI.HelpBox(projection.ComparisonSummary, MessageType.Info);
         }
 
         private static void Row(string label, double value)
