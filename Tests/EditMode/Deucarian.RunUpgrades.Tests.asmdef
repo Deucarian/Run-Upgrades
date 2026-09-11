@@ -9,7 +9,8 @@
     "Deucarian.Attacks.Authoring",
     "Deucarian.WeaponSystems.Authoring",
     "Deucarian.GameContentAuthoring.Editor",
-    "Deucarian.Editor"
+    "Deucarian.Editor",
+    "Deucarian.Diagnostics"
   ],
   "includePlatforms": [
     "Editor"

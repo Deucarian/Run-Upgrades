@@ -16,8 +16,9 @@
     "com.deucarian.gameplay-foundation": "0.1.1",
     "com.deucarian.attacks": "0.1.1",
     "com.deucarian.weapon-systems": "0.1.1",
-    "com.deucarian.editor": "1.10.6",
-    "com.deucarian.game-content-authoring": "0.2.4"
+    "com.deucarian.editor": "1.10.8",
+    "com.deucarian.game-content-authoring": "0.2.4",
+    "com.deucarian.diagnostics": "0.2.3"
   },
   "samples": [
     {

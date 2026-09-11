@@ -61,7 +61,7 @@ namespace Deucarian.RunUpgrades
     }
 
     public enum RunUpgradeRarity { Common = 0, Uncommon = 1, Rare = 2, Epic = 3, Legendary = 4 }
-    public enum RunUpgradeSelectionStatus { Selected = 0, UnknownUpgrade = 1, Banished = 2, PrerequisiteMissing = 3, Excluded = 4, MaxRankReached = 5 }
+    public enum RunUpgradeSelectionStatus { Selected = 0, UnknownUpgrade = 1, Banished = 2, PrerequisiteMissing = 3, Excluded = 4, MaxRankReached = 5, ExpiredChoice = 6, ForeignChoice = 7, MissingChoice = 8 }
 
     /// <summary>Explicit effect descriptor. Applying it is game-owned adapter work.</summary>
     public readonly struct RunUpgradeEffectDescriptor
