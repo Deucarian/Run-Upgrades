@@ -8,6 +8,9 @@ namespace Deucarian.RunUpgrades.Authoring
     public sealed class RunUpgradeHost : MonoBehaviour, IDiagnosticProvider
     {
         private RunUpgradeProfile profile;
+        [SerializeField] private bool initializeFromDefinitions;
+        [SerializeField] private RunUpgradeDefinitionCatalog definitions;
+        [SerializeField] private int seed = 1;
         private bool destroyed;
         public void Configure(RunUpgradeProfile value)
         {
@@ -21,7 +24,12 @@ namespace Deucarian.RunUpgrades.Authoring
         private RunUpgradeProfile Profile => profile ?? throw new InvalidOperationException("RunUpgradeHost '" + name + "' is not configured. Supply this run's RunUpgradeProfile during startup.");
         private void OnDestroy() { diagnosticRegistration?.Dispose(); diagnosticRegistration = null;  destroyed = true; profile = null; }
         private DiagnosticProviderRegistration diagnosticRegistration;
-        private void Awake() => diagnosticRegistration = DiagnosticProviderRegistry.Register(this);
+        private void Awake()
+        {
+            diagnosticRegistration = DiagnosticProviderRegistry.Register(this);
+            if (initializeFromDefinitions && profile == null)
+                Configure(new RunUpgradeProfile(new RunUpgradeCatalog((definitions != null ? definitions : RunUpgradeDefinitionCatalog.LoadProject()).CreateRuntimeDefinitions()), new RunUpgradeState(), seed));
+        }
         string IDiagnosticProvider.ProviderId => "run-upgrades.host." + GetInstanceID();
         string IDiagnosticProvider.DisplayName => "RunUpgradeHost";
         void IDiagnosticProvider.Collect(DiagnosticReportBuilder builder)
