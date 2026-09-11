@@ -20,8 +20,12 @@ namespace Deucarian.RunUpgrades.Editor
         }
     }
 
-    internal sealed class RunUpgradeAuthoringProvider : IGameContentAuthoringProvider, IGameContentAuthoringSurfaceProvider, IGameContentAuthoringLensProvider
+    internal sealed class RunUpgradeAuthoringProvider : IGameContentAuthoringProvider, IGameContentAuthoringSurfaceProvider, IGameContentAuthoringLensProvider, IGameContentToolkitAuthoringProvider, IGameContentToolkitRecordProvider
     {
+        public UnityEngine.UIElements.VisualElement CreateEditor(GameContentAuthoringSurfaceContext context) => RunUpgradeToolkitAuthoring.Create(context);
+        public UnityEngine.UIElements.VisualElement CreateRecordDetails(GameContentRecordDescriptor record) => RunUpgradeRecordToolkit.RunUpgrade(record);
+        public string RecordIconId => "circle-arrow-up";
+
         private readonly RunUpgradeAuthoringState _state = new RunUpgradeAuthoringState();
         private readonly RunUpgradeGameContentPreviewController _preview = new RunUpgradeGameContentPreviewController();
         private readonly RunUpgradeProviderV2State _v2State = new RunUpgradeProviderV2State();
