@@ -9,6 +9,19 @@ namespace Deucarian.RunUpgrades.Tests
     public sealed class RunUpgradeTests
     {
         [Test]
+        public void ProfileRejectsOldAndForeignOffersAndConsumesSuccessfulChoice()
+        {
+            var profile = new RunUpgradeProfile(Catalog(), new RunUpgradeState(), 42);
+            var other = new RunUpgradeProfile(Catalog(), new RunUpgradeState(), 42);
+            var old = profile.Draft().Choices[0];
+            var current = profile.Draft().Choices[0];
+            Assert.That(profile.Select(old).Status, Is.EqualTo(RunUpgradeSelectionStatus.ExpiredChoice));
+            Assert.That(other.Select(current).Status, Is.EqualTo(RunUpgradeSelectionStatus.ForeignChoice));
+            Assert.That(profile.Select(current).Status, Is.EqualTo(RunUpgradeSelectionStatus.Selected));
+            Assert.That(profile.Select(current).Status, Is.EqualTo(RunUpgradeSelectionStatus.ExpiredChoice));
+        }
+
+        [Test]
         public void ValidUpgradeDefinition()
         {
             RunUpgradeDefinition upgrade = Upgrade("direct.damage", RunUpgradeRarity.Rare, 7, 3);

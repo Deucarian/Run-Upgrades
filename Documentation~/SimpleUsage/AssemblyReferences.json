@@ -1,18 +1,16 @@
 {
-  "name": "Deucarian.RunUpgrades.Authoring",
-  "rootNamespace": "Deucarian.RunUpgrades.Authoring",
+  "name": "Deucarian.RunUpgrades.Samples.SimpleUsage",
+  "rootNamespace": "Deucarian.RunUpgrades.Samples.SimpleUsage",
   "references": [
     "Deucarian.RunUpgrades",
-    "Deucarian.Attacks.Authoring",
-    "Deucarian.WeaponSystems.Authoring",
-    "Deucarian.Diagnostics"
+    "Deucarian.RunUpgrades.Authoring"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,
   "precompiledReferences": [],
-  "autoReferenced": true,
+  "autoReferenced": false,
   "defineConstraints": [],
   "versionDefines": [],
   "noEngineReferences": false
