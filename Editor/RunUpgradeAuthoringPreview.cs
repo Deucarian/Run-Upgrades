@@ -134,7 +134,7 @@ namespace Deucarian.RunUpgrades.Editor
             return previewState.SelectedRank;
         }
 
-        private static UnityEngine.Object GetPrimaryPreviewAsset(RunUpgradeAuthoringState state)
+        internal static UnityEngine.Object GetPrimaryPreviewAsset(RunUpgradeAuthoringState state)
         {
             if (state == null)
                 return null;

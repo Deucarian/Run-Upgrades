@@ -1,7 +1,9 @@
 using System;
+using System.Linq;
 using Deucarian.GameContentAuthoring.Editor;
 using Deucarian.RunUpgrades.Editor;
 using NUnit.Framework;
+using UnityEngine.UIElements;
 
 namespace Deucarian.RunUpgrades.Tests
 {
@@ -50,7 +52,20 @@ namespace Deucarian.RunUpgrades.Tests
             Assert.That(projection.MaxRank, Is.EqualTo(8));
             Assert.That(projection.EffectAmount, Is.EqualTo(0.15));
             Assert.That(projection.ReferenceSummary, Does.Contain("evolution.arc"));
-            Assert.That(projection.ComparisonSummary, Is.EqualTo("+15% per rank"));
+           Assert.That(projection.ComparisonSummary, Is.EqualTo("+15% per rank"));
+            var adapter = new NativeProjectionAdapter(projection);
+            try
+            {
+                GameContentRecordProjectionRegistry<UpgradeContentRecordProjection>.Register(adapter);
+                var view = new RunUpgradeAuthoringProvider().CreateRecordDetails(record);
+                var labels = view.Query<Label>().ToList().Select(label => label.text).ToArray();
+                Assert.That(labels, Does.Contain("Requires Arc rank 3"));
+                Assert.That(labels, Does.Contain("Arcane class"));
+                Assert.That(labels, Does.Contain("weapon.arc, evolution.arc"));
+                Assert.That(labels, Does.Contain("+15% per rank"));
+                Assert.That(view.Q<FloatField>(), Is.Null, "Imported projections must remain read-only.");
+            }
+            finally { GameContentRecordProjectionRegistry<UpgradeContentRecordProjection>.Unregister(adapter.AdapterId); }
         }
 
         [TestCase((int)UpgradePackAwareSubtypeFilter.WeaponUpgrade, "weapon")]
@@ -97,6 +112,16 @@ namespace Deucarian.RunUpgrades.Tests
             Assert.That(UpgradePackAwareLensView.MatchesSubtype(matching, filter), Is.True);
             Assert.That(UpgradePackAwareLensView.MatchesSubtype(other, filter), Is.False);
             Assert.That(matching.CanonicalKey.SourceRecordId, Is.EqualTo("upgrade." + id));
+        }
+
+        private sealed class NativeProjectionAdapter : IGameContentRecordProjectionAdapter<UpgradeContentRecordProjection>
+        {
+            private readonly UpgradeContentRecordProjection projection;
+            public NativeProjectionAdapter(UpgradeContentRecordProjection projection) { this.projection = projection; }
+            public string AdapterId { get; } = "native-record-test-" + Guid.NewGuid().ToString("N");
+            public int SortOrder => int.MinValue;
+            public bool TryProject(GameContentRecordDescriptor record, out UpgradeContentRecordProjection value)
+            { value = projection; return record.CanonicalKey.Equals(projection.Record.CanonicalKey); }
         }
 
         private static GameContentRecordDescriptor Record(

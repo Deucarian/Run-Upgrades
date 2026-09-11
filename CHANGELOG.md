@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.3] - 2026-09-11
+
+- Provide native upgrade drafts and imported-record forms through the authoring owner, preserving stale-write checks and explicit save behavior.
+- Require Editor 1.10.6 for the shared native controls, typography, responsive layouts and accessible interaction states.
+
 ## [0.1.2] - 2026-09-09
 
 - Use Editor-owned typography, fields, and actions throughout the authoring forms. Runtime upgrade behavior is unchanged.
