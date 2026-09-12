@@ -1,0 +1,5 @@
+{
+  "name": "Deucarian.Samples.RunUpgrades.DefinitionDeclarations",
+  "references": ["Deucarian.Attacks.Authoring", "Deucarian.Attacks.Editor", "Deucarian.Combat", "Deucarian.Combat.Editor", "Deucarian.Editor", "Deucarian.RunUpgrades", "Deucarian.RunUpgrades.Authoring", "Deucarian.RunUpgrades.Editor", "Deucarian.WeaponSystems.Authoring"],
+  "includePlatforms": ["Editor"]
+}

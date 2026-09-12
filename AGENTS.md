@@ -25,6 +25,9 @@ Allowed dependency shape:
 - Runtime upgrade logic may depend on Gameplay Foundation.
 - Authoring/runtime descriptors may depend on Attacks and Weapon Systems for effect targets.
 - Editor surfaces may depend on Editor and Game Content Authoring.
+- The definition workflow sample references Combat's authored damage definition
+  through its sample attack. This is sample content composition; the upgrade
+  runtime still does not resolve damage or own combat state.
 
 Required dependencies and why:
 
@@ -33,6 +36,7 @@ Required dependencies and why:
 - `com.deucarian.weapon-systems`: weapon authoring references targeted by run upgrade effects.
 - `com.deucarian.editor`: shared editor shell/resources for authoring surfaces.
 - `com.deucarian.game-content-authoring`: provider registration and validation UI for run upgrade content.
+- `com.deucarian.combat`: sample-only damage definition creation and serialization.
 
 Optional/version-defined dependencies:
 
@@ -45,7 +49,7 @@ Architecture exceptions:
 ## Policies
 
 - Keep this package focused on run-scoped upgrade choice logic and authoring.
-- Do not add hard dependencies on Progression, Persistence, Auto Defense, Defense Games, Projectiles, Combat, UI, Monetization, or template packages without a governance update.
+- Do not add hard dependencies on Progression, Persistence, Auto Defense, Defense Games, Projectiles, UI, Monetization, or template packages without a governance update. Combat is limited to the declared sample composition above.
 - Long-term account progression, currencies, and reward payout belong in Progression or the owning game/template.
 - Logging: Do not introduce direct Unity Debug calls.
 - Unity object lifetime: Use Common only if production code directly owns transient Unity object cleanup.

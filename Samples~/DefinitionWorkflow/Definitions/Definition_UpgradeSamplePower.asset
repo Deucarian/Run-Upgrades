@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93de16d0cab74525af394d506739d60d, type: 3}
+  m_Name: Definition_UpgradeSamplePower
+  m_EditorClassIdentifier: Deucarian.RunUpgrades.Authoring::Deucarian.RunUpgrades.Authoring.RunUpgradeDefinitionAsset
+  _id: 92ece89b0b9549d795e2c67a6a85483a
+  _displayName: UpgradeSamplePower
+  _icon: {fileID: 0}
+  _description: Increase authored combat output.
+  _tags: []
+  _economy: {fileID: 6240589971331199656}
+  _effects: {fileID: 6784650419264226794}
+--- !u!114 &6240589971331199656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 279b315f82534792b0738c5f816e85ed, type: 3}
+  m_Name: Economy
+  m_EditorClassIdentifier: Deucarian.RunUpgrades.Authoring::Deucarian.RunUpgrades.Authoring.RunUpgradeEconomyDefinitionAsset
+  _rarity: 0
+  _weight: 5
+  _maxRank: 3
+  _costs:
+--- !u!114 &6784650419264226794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44148c094a23470ba0fb80cc62020baa, type: 3}
+  m_Name: Effects
+  m_EditorClassIdentifier: Deucarian.RunUpgrades.Authoring::Deucarian.RunUpgrades.Authoring.RunUpgradeEffectsDefinitionAsset
+  _effects:
+  - _targetKind: 0
+    _modifierType: 0
+    _amount: 2
+    _attack: {fileID: 11400000, guid: 2cc39080dfae04a4ca6171121c9d07c4, type: 2}
+    _weapon: {fileID: 0}
+    _enemy: {fileID: 0}
+    _targetIdOverride:
+    _effectIdOverride:
+  _prerequisites: []
+  _exclusions: []

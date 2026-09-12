@@ -1,5 +1,15 @@
 # Deucarian Run Upgrades
 
+## Typed definition workflow
+
+Definitions describe reusable upgrades. Offered choices are runtime handles: selecting an old or already consumed offer is rejected by the same core API.
+
+Start with the [Definition Workflow walkthrough](Documentation~/DefinitionWorkflow.md).
+Import **Definition Workflow** in Package Manager for a configured sample scene
+and short caller scripts. Definitions can be edited as assets or editable C# declarations; generated keys
+work in code and Inspector dropdowns.
+
+
 `com.deucarian.run-upgrades` owns deterministic roguelite run upgrade drafting and selected-upgrade state.
 
 It does not apply effects. Games translate selected `RunUpgradeEffectDescriptor` values through their own adapters into stats, weapon configuration, Auto Defense modules, Tower Defense towers, or other package APIs.
