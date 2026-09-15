@@ -4,7 +4,8 @@
   "references": [
     "Deucarian.RunUpgrades",
     "Deucarian.Attacks.Authoring",
-    "Deucarian.WeaponSystems.Authoring"
+    "Deucarian.WeaponSystems.Authoring",
+    "Deucarian.Diagnostics"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

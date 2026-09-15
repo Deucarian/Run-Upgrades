@@ -1,0 +1,7 @@
+{
+  "name": "Deucarian.RunUpgrades.Authoring.Samples.DefinitionWorkflow",
+  "references": [
+    "Deucarian.RunUpgrades",
+    "Deucarian.RunUpgrades.Authoring"
+  ]
+}

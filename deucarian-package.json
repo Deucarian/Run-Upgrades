@@ -11,17 +11,22 @@
     "Deucarian.RunUpgrades.Editor"
   ],
   "sampleAssemblies": [
-    "Deucarian.RunUpgrades.Samples"
+    "Deucarian.RunUpgrades.Authoring.Samples.DefinitionWorkflow",
+    "Deucarian.RunUpgrades.Samples",
+    "Deucarian.Samples.RunUpgrades.DefinitionDeclarations"
   ],
   "testAssemblies": [
-    "Deucarian.RunUpgrades.Tests"
+    "Deucarian.RunUpgrades.Tests",
+    "Deucarian.RunUpgrades.Tests.PlayMode"
   ],
   "requiredDependencies": [
     "com.deucarian.gameplay-foundation",
     "com.deucarian.attacks",
     "com.deucarian.weapon-systems",
     "com.deucarian.editor",
-    "com.deucarian.game-content-authoring"
+    "com.deucarian.game-content-authoring",
+    "com.deucarian.diagnostics",
+    "com.deucarian.combat"
   ],
   "optionalVersionDefinedDependencies": [],
   "allowedDirectDebugCalls": [],

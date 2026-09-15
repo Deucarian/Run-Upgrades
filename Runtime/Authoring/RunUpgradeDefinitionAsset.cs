@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace Deucarian.RunUpgrades.Authoring
 {
-    [CreateAssetMenu(menuName = "Deucarian/Upgrades/Run Upgrade Definition", fileName = "RunUpgradeDefinition")]
     public sealed class RunUpgradeDefinitionAsset : ScriptableObject
     {
         [SerializeField] private string _id = "upgrade.example.damage-up";
